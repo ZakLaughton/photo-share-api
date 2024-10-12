@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon -e js,json,graphql"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +13,8 @@
     "apollo-server": "^3.13.0",
     "graphql": "^16.9.0",
     "nodemon": "^3.1.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
   }
 }
