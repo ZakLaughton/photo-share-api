@@ -1,59 +1,11 @@
 // 1. Require 'apollo-server'
 const { ApolloServer } = require("apollo-server-express");
 const express = require("express");
-const { GraphQLScalarType } = require("graphql");
 const expressPlayground =
   require("graphql-playground-middleware-express").default;
-
-const typeDefs = `
-    type Query {
-        totalPhotos: Int!
-    }
-
-    type Photo {
-        id: ID!
-        url: String!
-        name: String!
-        description: String
-        category: PhotoCategory!
-        postedBy: User!
-        taggedUsers: [User!]!
-        created: DateTime!
-    }
-
-    input PostPhotoInput {
-        name: String!
-        category: PhotoCategory=PORTRAIT
-        description: String
-    }
-
-    type User {
-        githubLogin: ID!
-        name: String
-        avatar: String
-        postedPhotos: [Photo!]!
-        inPhotos: [Photo!]!
-    }
-
-    type Mutation {
-        postPhoto(input: PostPhotoInput!): Photo!
-    }
-
-    enum PhotoCategory {
-      SELFIE
-      PORTRAIT
-      ACTION
-      LANDSCAPE
-      GRAPHIC
-    }
-
-    scalar DateTime
-
-    type Query {
-        totalPhotos: Int!
-        allPhotos: [Photo!]!
-    }
-`;
+const { readFileSync } = require("fs");
+const typeDefs = readFileSync("./typeDefs.graphql", "UTF-8");
+const resolvers = require("./resolvers");
 
 let _id = 0;
 var users = [
@@ -95,54 +47,6 @@ var tags = [
   { photoID: "2", userID: "gPlake" },
 ];
 const serialize = (value) => new Date(value).toISOString();
-
-const resolvers = {
-  Query: {
-    totalPhotos: () => 42,
-    allPhotos: () => photos,
-  },
-  // 3. Mutation and postPhoto resolver
-  Mutation: {
-    postPhoto(parent, args) {
-      // Create a new photo, and generate an ID
-      const newPhoto = {
-        id: _id++,
-        ...args.input,
-      };
-      photos.push(newPhoto);
-      // Return the new photo
-      return newPhoto;
-    },
-  },
-  Photo: {
-    url: (parent) => `http://yoursite.com/img/${parent.id}.jpg`,
-    postedBy: (parent) => {
-      return users.find((u) => u.githubLogin === parent.githubUser);
-    },
-    taggedUsers: (parent) =>
-      tags
-        .filter((tag) => tag.photoID === parent.id)
-        .map((tag) => tag.userID)
-        .map((userID) => users.find((u) => u.githubLogin === userID)),
-  },
-  User: {
-    postedPhotos: (parent) => {
-      return photos.filter((p) => p.githubUser === parent.githubLogin);
-    },
-    inPhotos: (parent) =>
-      tags
-        .filter((tag) => tag.userID === parent.githubLogin)
-        .map((tag) => tag.photoID)
-        .map((photoID) => photos.find((p) => p.id === photoID)),
-  },
-  DateTime: new GraphQLScalarType({
-    name: "DateTime",
-    description: "A valid date time value.",
-    parseValue: (value) => new Date(value),
-    serialize: (value) => new Date(value).toISOString(),
-    parseLiteral: (ast) => ast.value,
-  }),
-};
 
 // Old apollo server setup (not express)
 // server
