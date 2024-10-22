@@ -4,6 +4,8 @@ const express = require("express");
 const expressPlayground =
   require("graphql-playground-middleware-express").default;
 const { readFileSync } = require("fs");
+const { MongoClient } = require("mongodb");
+require("dotenv").config();
 const typeDefs = readFileSync("./typeDefs.graphql", "UTF-8");
 const resolvers = require("./resolvers");
 
@@ -46,34 +48,35 @@ var tags = [
   { photoID: "2", userID: "mHattrup" },
   { photoID: "2", userID: "gPlake" },
 ];
-const serialize = (value) => new Date(value).toISOString();
 
 // Old apollo server setup (not express)
 // server
 //   .listen()
 //   .then(({ url }) => console.log(`GraphQL Service running on ${url}`));
 
-var app = express();
+async function start() {
+  const app = express();
+  const MONGO_DB = process.env.DB_HOST;
 
-let server = null;
+  const client = await MongoClient.connect(MONGO_DB, { useNewUrlParser: true });
+  const db = client.db();
 
-async function startServer() {
-  server = new ApolloServer({
-    typeDefs,
-    resolvers,
-  });
+  const context = { db };
+
+  const server = new ApolloServer({ typeDefs, resolvers, context });
+
   await server.start();
   server.applyMiddleware({ app });
+
+  app.get("/", (req, res) => res.end("Welcome to the PhotoShare API"));
+
+  app.get("/playground", expressPlayground({ endpoint: "/graphql" }));
+
+  app.listen({ port: 4000 }, () =>
+    console.log(
+      `GraphQL Server running at http://localhost:4000${server.graphqlPath}`,
+    ),
+  );
 }
-startServer();
 
-// 4. Create a home route
-app.get("/", (req, res) => res.end("Welcome to the PhotoShare API"));
-app.get("/playground", expressPlayground({ endpoint: "/graphql" }));
-
-// 5. Listen on a specific port
-app.listen({ port: 4000 }, () =>
-  console.log(
-    `GraphQL Server running @ http://localhost:4000${server.graphqlPath}`,
-  ),
-);
+start();

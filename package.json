@@ -11,9 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "apollo-server-express": "^3.13.0",
+    "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "graphql": "^16.9.0",
     "graphql-playground-middleware-express": "^1.7.23",
+    "mongodb": "^6.9.0",
     "nodemon": "^3.1.7"
   },
   "devDependencies": {
